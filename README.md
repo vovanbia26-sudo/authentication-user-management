@@ -1,6 +1,60 @@
-# 🔐 Authentication & User Management
+# 🔐 **Authentication & User Management System**
 
-Ứng dụng web hoàn chỉnh với **Authentication** và **User Management** được xây dựng bằng **Node.js**, **Express**, **MongoDB**, và **React**.
+> **Hệ thống quản lý người dùng và xác thực toàn diện với các tính năng bảo mật nâng cao**
+
+[![Node.js](https://img.shields.io/badge/Node.js-18.x-green.svg)](https://nodejs.org/)
+[![React](https://img.shields.io/badge/React-18.x-blue.svg)](https://reactjs.org/)
+[![MongoDB](https://img.shields.io/badge/MongoDB-6.x-green.svg)](https://mongodb.com/)
+[![JWT](https://img.shields.io/badge/JWT-Auth-orange.svg)](https://jwt.io/)
+[![Redux](https://img.shields.io/badge/Redux-Toolkit-purple.svg)](https://redux-toolkit.js.org/)
+
+---
+
+## 🚀 **DEMO LINKS**
+
+- **🌐 Live Frontend**: [https://your-app.vercel.app](https://your-app.vercel.app)
+- **🔧 Backend API**: [https://your-backend.render.com](https://your-backend.render.com)
+- **📚 GitHub Repo**: [https://github.com/vovanbia26-sudo/authentication-user-management](https://github.com/vovanbia26-sudo/authentication-user-management)
+
+---
+
+## ✨ **TÍNH NĂNG NÂNG CAO**
+
+### 🔑 **1. JWT Access Token + Refresh Token**
+- **Access Token**: Thời hạn ngắn (15 phút) cho bảo mật cao
+- **Refresh Token**: Tự động gia hạn, rotation bảo mật
+- **Session Management**: Quản lý phiên đăng nhập thông minh
+- **Auto-logout**: Tự động đăng xuất khi token hết hạn
+
+### 👥 **2. Advanced RBAC (Role-Based Access Control)**
+- **3 Roles**: User, Moderator, Admin
+- **Hierarchical Permissions**: Admin > Moderator > User
+- **Protected Routes**: Frontend + Backend authorization
+- **Dynamic UI**: Hiển thị tính năng theo role
+
+### 🖼️ **3. Avatar Upload System**
+- **Image Processing**: Auto-resize với Sharp
+- **Cloud Storage**: Cloudinary integration
+- **File Validation**: Type, size, format checking
+- **Optimization**: Compress ảnh tự động
+
+### 📧 **4. Forgot/Reset Password (Email thật)**
+- **Gmail SMTP**: Gửi email thật qua Gmail
+- **Secure Tokens**: Crypto-generated reset tokens
+- **Rate Limiting**: Chống spam email
+- **HTML Templates**: Email đẹp, professional
+
+### 📊 **5. Activity Logging & Rate Limiting**
+- **User Activity Tracking**: Login, logout, profile changes
+- **Security Monitoring**: Failed login attempts, suspicious activity
+- **Rate Limiting**: Chống brute force attacks
+- **Analytics Dashboard**: Thống kê hoạt động real-time
+
+### 🔄 **6. Redux Toolkit + Protected Routes**
+- **State Management**: Redux Toolkit cho scalability
+- **Real-time Updates**: UI sync với server state
+- **Route Protection**: Role-based route guards
+- **Persistent State**: LocalStorage integration
 
 ## 📋 Mục lục
 
