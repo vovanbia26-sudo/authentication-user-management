@@ -15,19 +15,31 @@ const {
 } = require('../controllers/userController');
 const { protect, authorize, checkRole, checkMinRole } = require('../middleware/auth');
 
-// Multer configuration for file upload
+// Advanced Multer configuration for avatar upload
 const upload = multer({
   dest: 'uploads/',
   limits: {
-    fileSize: 5 * 1024 * 1024, // 5MB limit
+    fileSize: 10 * 1024 * 1024, // 10MB limit
+    files: 1, // Only 1 file at a time
   },
   fileFilter: (req, file, cb) => {
-    if (file.mimetype.startsWith('image/')) {
+    // Check file type
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+    if (allowedTypes.includes(file.mimetype)) {
       cb(null, true);
     } else {
-      cb(new Error('Only image files are allowed'), false);
+      cb(new Error('Only JPEG, PNG, and WebP images are allowed'), false);
     }
   },
+  // Custom filename
+  storage: multer.diskStorage({
+    destination: 'uploads/',
+    filename: (req, file, cb) => {
+      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+      const ext = file.originalname.split('.').pop();
+      cb(null, `avatar-${uniqueSuffix}.${ext}`);
+    }
+  })
 });
 
 // Profile routes (authenticated users)

@@ -1,5 +1,8 @@
 const User = require('../models/User');
 const cloudinary = require('../config/cloudinary');
+const sharp = require('sharp');
+const fs = require('fs');
+const path = require('path');
 
 // @desc    Get current user profile
 // @route   GET /api/users/profile
@@ -103,11 +106,28 @@ exports.uploadAvatar = async (req, res) => {
       });
     }
 
-    // Upload to Cloudinary
-    const result = await cloudinary.uploader.upload(req.file.path, {
+    // Process image with Sharp - resize and optimize
+    const processedImagePath = path.join('uploads', `processed_${Date.now()}_${req.file.filename}`);
+    
+    await sharp(req.file.path)
+      .resize(300, 300, {
+        fit: 'cover',
+        position: 'center'
+      })
+      .jpeg({ 
+        quality: 90,
+        progressive: true 
+      })
+      .toFile(processedImagePath);
+
+    // Upload processed image to Cloudinary
+    const result = await cloudinary.uploader.upload(processedImagePath, {
       folder: 'avatars',
-      width: 150,
-      crop: 'scale',
+      transformation: [
+        { width: 300, height: 300, crop: 'fill' },
+        { quality: 'auto:good' },
+        { format: 'auto' }
+      ]
     });
 
     // Update user avatar
@@ -122,9 +142,13 @@ exports.uploadAvatar = async (req, res) => {
     user.avatar = result.secure_url;
     await user.save();
 
-    // Xóa file tạm
-    const fs = require('fs');
-    fs.unlinkSync(req.file.path);
+    // Xóa file tạm (cả original và processed)
+    try {
+      fs.unlinkSync(req.file.path);
+      fs.unlinkSync(processedImagePath);
+    } catch (err) {
+      console.log('Error deleting temp files:', err.message);
+    }
 
     res.status(200).json({
       success: true,
@@ -136,11 +160,15 @@ exports.uploadAvatar = async (req, res) => {
     
     // Xóa file tạm nếu có lỗi
     if (req.file && req.file.path) {
-      const fs = require('fs');
       try {
         fs.unlinkSync(req.file.path);
+        // Also try to delete processed file if it exists
+        const processedImagePath = path.join('uploads', `processed_${Date.now()}_${req.file.filename}`);
+        if (fs.existsSync(processedImagePath)) {
+          fs.unlinkSync(processedImagePath);
+        }
       } catch (unlinkError) {
-        console.error('Error deleting temp file:', unlinkError);
+        console.error('Error deleting temp files:', unlinkError);
       }
     }
     
