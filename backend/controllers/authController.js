@@ -1,4 +1,5 @@
 const User = require('../models/User');
+const RefreshToken = require('../models/RefreshToken');
 const crypto = require('crypto');
 const sendEmail = require('../utils/sendEmail');
 
@@ -86,13 +87,26 @@ exports.login = async (req, res) => {
       });
     }
 
-    // Generate token
-    const token = user.generateToken();
+    // Generate Access Token and Refresh Token
+    const accessToken = user.generateToken();
+    const refreshToken = user.generateRefreshToken();
+
+    // Get IP address
+    const ipAddress = req.ip || req.connection.remoteAddress;
+
+    // Save Refresh Token to database
+    const refreshTokenDoc = await RefreshToken.create({
+      token: refreshToken,
+      user: user._id,
+      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
+      createdByIp: ipAddress,
+    });
 
     res.status(200).json({
       success: true,
       message: 'Login successful',
-      token,
+      token: accessToken,
+      refreshToken: refreshToken,
       user: {
         id: user._id,
         name: user.name,
@@ -110,11 +124,106 @@ exports.login = async (req, res) => {
   }
 };
 
+// @desc    Refresh access token
+// @route   POST /api/auth/refresh
+// @access  Public
+exports.refreshToken = async (req, res) => {
+  try {
+    const { refreshToken } = req.body;
+
+    if (!refreshToken) {
+      return res.status(400).json({
+        success: false,
+        message: 'Refresh token is required',
+      });
+    }
+
+    // Find refresh token in database
+    const tokenDoc = await RefreshToken.findOne({ token: refreshToken }).populate('user');
+
+    if (!tokenDoc) {
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid refresh token',
+      });
+    }
+
+    // Check if token is active
+    if (!tokenDoc.isActive) {
+      return res.status(401).json({
+        success: false,
+        message: 'Refresh token is expired or revoked',
+      });
+    }
+
+    // Verify JWT
+    const jwt = require('jsonwebtoken');
+    try {
+      jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET);
+    } catch (err) {
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid refresh token',
+      });
+    }
+
+    // Generate new access token
+    const newAccessToken = tokenDoc.user.generateToken();
+
+    // Optionally: Generate new refresh token and revoke old one (rotation)
+    const newRefreshToken = tokenDoc.user.generateRefreshToken();
+    const ipAddress = req.ip || req.connection.remoteAddress;
+
+    // Revoke old refresh token
+    tokenDoc.revoke(ipAddress, newRefreshToken);
+    await tokenDoc.save();
+
+    // Create new refresh token
+    await RefreshToken.create({
+      token: newRefreshToken,
+      user: tokenDoc.user._id,
+      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
+      createdByIp: ipAddress,
+    });
+
+    res.status(200).json({
+      success: true,
+      token: newAccessToken,
+      refreshToken: newRefreshToken,
+      user: {
+        id: tokenDoc.user._id,
+        name: tokenDoc.user.name,
+        email: tokenDoc.user.email,
+        role: tokenDoc.user.role,
+        avatar: tokenDoc.user.avatar,
+      },
+    });
+  } catch (error) {
+    console.error('Refresh token error:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Server error during token refresh',
+    });
+  }
+};
+
 // @desc    Logout user
 // @route   POST /api/auth/logout
 // @access  Private
 exports.logout = async (req, res) => {
   try {
+    const { refreshToken } = req.body;
+
+    // Revoke refresh token if provided
+    if (refreshToken) {
+      const tokenDoc = await RefreshToken.findOne({ token: refreshToken });
+      if (tokenDoc) {
+        const ipAddress = req.ip || req.connection.remoteAddress;
+        tokenDoc.revoke(ipAddress);
+        await tokenDoc.save();
+      }
+    }
+
     res.status(200).json({
       success: true,
       message: 'Logout successful',
@@ -145,6 +254,10 @@ exports.forgotPassword = async (req, res) => {
 
     // Get reset token
     const resetToken = user.getResetPasswordToken();
+
+    // Log resetToken để test
+    console.log('Reset Token:', resetToken);
+    console.log('Reset URL:', `${process.env.CLIENT_URL}/reset-password/${resetToken}`);
 
     await user.save({ validateBeforeSave: false });
 

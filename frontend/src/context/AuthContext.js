@@ -26,19 +26,19 @@ export const AuthProvider = ({ children }) => {
         setLoading(false);
     }, []);
 
-    const login = async(credentials) => {
+    const login = async (credentials) => {
         const data = await authService.login(credentials);
         setUser(data.user);
         return data;
     };
 
-    const signup = async(userData) => {
+    const signup = async (userData) => {
         const data = await authService.signup(userData);
         setUser(data.user);
         return data;
     };
 
-    const logout = async() => {
+    const logout = async () => {
         await authService.logout();
         setUser(null);
     };
@@ -55,9 +55,9 @@ export const AuthProvider = ({ children }) => {
         logout,
         updateUser,
         isAuthenticated: !!user,
-        isAdmin: user ? .role === 'admin',
+        isAdmin: user?.role === 'admin',
         loading,
     };
 
-    return <AuthContext.Provider value = { value } > { children } < /AuthContext.Provider>;
+    return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

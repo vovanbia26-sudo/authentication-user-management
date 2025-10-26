@@ -58,10 +58,17 @@ userSchema.methods.comparePassword = async function (enteredPassword) {
   return await bcrypt.compare(enteredPassword, this.password);
 };
 
-// Generate JWT token
+// Generate JWT Access Token (short-lived)
 userSchema.methods.generateToken = function () {
   return jwt.sign({ id: this._id, role: this.role }, process.env.JWT_SECRET, {
-    expiresIn: process.env.JWT_EXPIRE,
+    expiresIn: process.env.JWT_EXPIRE || '15m', // Default 15 minutes
+  });
+};
+
+// Generate JWT Refresh Token (long-lived)
+userSchema.methods.generateRefreshToken = function () {
+  return jwt.sign({ id: this._id }, process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET, {
+    expiresIn: process.env.JWT_REFRESH_EXPIRE || '7d', // Default 7 days
   });
 };
 

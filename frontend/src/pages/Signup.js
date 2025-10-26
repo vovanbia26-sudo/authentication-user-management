@@ -23,7 +23,7 @@ const Signup = () => {
         });
     };
 
-    const handleSubmit = async(e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
 
         // Validate password match
@@ -40,101 +40,87 @@ const Signup = () => {
             toast.success('Account created successfully!');
             navigate('/profile');
         } catch (error) {
-            const message = error.response ? .data ? .message || 'Signup failed';
+            const message = error.response?.data?.message || 'Signup failed';
             toast.error(message);
         } finally {
             setLoading(false);
         }
     };
 
-    return ( <
-        div className = "auth-container" >
-        <
-        div className = "auth-box" >
-        <
-        h2 className = "auth-title" > Sign Up < /h2> <
-        p className = "auth-subtitle" > Create your account to get started. < /p>
+    return (
+        <div className="auth-container">
+            <div className="auth-box">
+                <h2 className="auth-title">Đăng ký</h2>
+                <p className="auth-subtitle">Tạo tài khoản để bắt đầu.</p>
 
-        <
-        form onSubmit = { handleSubmit }
-        className = "auth-form" >
-        <
-        div className = "form-group" >
-        <
-        label htmlFor = "name" > Full Name < /label> <
-        input type = "text"
-        id = "name"
-        name = "name"
-        value = { formData.name }
-        onChange = { handleChange }
-        placeholder = "Enter your full name"
-        required /
-        >
-        <
-        /div>
+                <form onSubmit={handleSubmit} className="auth-form">
+                    <div className="form-group">
+                        <label htmlFor="name">Họ và tên</label>
+                        <input
+                            type="text"
+                            id="name"
+                            name="name"
+                            value={formData.name}
+                            onChange={handleChange}
+                            placeholder="Nhập họ và tên của bạn"
+                            required
+                        />
+                    </div>
 
-        <
-        div className = "form-group" >
-        <
-        label htmlFor = "email" > Email < /label> <
-        input type = "email"
-        id = "email"
-        name = "email"
-        value = { formData.email }
-        onChange = { handleChange }
-        placeholder = "Enter your email"
-        required /
-        >
-        <
-        /div>
+                    <div className="form-group">
+                        <label htmlFor="email">Email</label>
+                        <input
+                            type="email"
+                            id="email"
+                            name="email"
+                            value={formData.email}
+                            onChange={handleChange}
+                            placeholder="Nhập email của bạn"
+                            required
+                        />
+                    </div>
 
-        <
-        div className = "form-group" >
-        <
-        label htmlFor = "password" > Password < /label> <
-        input type = "password"
-        id = "password"
-        name = "password"
-        value = { formData.password }
-        onChange = { handleChange }
-        placeholder = "Enter your password"
-        required minLength = "6" /
-        >
-        <
-        /div>
+                    <div className="form-group">
+                        <label htmlFor="password">Mật khẩu</label>
+                        <input
+                            type="password"
+                            id="password"
+                            name="password"
+                            value={formData.password}
+                            onChange={handleChange}
+                            placeholder="Nhập mật khẩu của bạn"
+                            required
+                            minLength="6"
+                        />
+                    </div>
 
-        <
-        div className = "form-group" >
-        <
-        label htmlFor = "confirmPassword" > Confirm Password < /label> <
-        input type = "password"
-        id = "confirmPassword"
-        name = "confirmPassword"
-        value = { formData.confirmPassword }
-        onChange = { handleChange }
-        placeholder = "Confirm your password"
-        required minLength = "6" /
-        >
-        <
-        /div>
+                    <div className="form-group">
+                        <label htmlFor="confirmPassword">Xác nhận mật khẩu</label>
+                        <input
+                            type="password"
+                            id="confirmPassword"
+                            name="confirmPassword"
+                            value={formData.confirmPassword}
+                            onChange={handleChange}
+                            placeholder="Xác nhận mật khẩu của bạn"
+                            required
+                            minLength="6"
+                        />
+                    </div>
 
-        <
-        button type = "submit"
-        className = "auth-button"
-        disabled = { loading } > { loading ? 'Creating Account...' : 'Sign Up' } <
-        /button> <
-        /form>
+                    <button type="submit" className="auth-button" disabled={loading}>
+                        {loading ? 'Đang tạo tài khoản...' : 'Đăng ký'}
+                    </button>
+                </form>
 
-        <
-        p className = "auth-switch" >
-        Already have an account ? { ' ' } <
-        Link to = "/login"
-        className = "auth-link" >
-        Login <
-        /Link> <
-        /p> <
-        /div> <
-        /div>
+                <p className="auth-switch">
+                    Đã có tài khoản?{' '}
+                    <Link to="/login" className="auth-link">
+                        Đăng nhập
+                    </Link>
+                </p>
+            </div>
+        </div>
     );
 };
 

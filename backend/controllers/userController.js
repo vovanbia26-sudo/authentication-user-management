@@ -91,7 +91,15 @@ exports.uploadAvatar = async (req, res) => {
     if (!req.file) {
       return res.status(400).json({
         success: false,
-        message: 'Please upload a file',
+        message: 'Vui lòng chọn file để tải lên',
+      });
+    }
+
+    // Kiểm tra cấu hình Cloudinary
+    if (!process.env.CLOUDINARY_CLOUD_NAME || !process.env.CLOUDINARY_API_KEY || !process.env.CLOUDINARY_API_SECRET) {
+      return res.status(500).json({
+        success: false,
+        message: 'Cấu hình Cloudinary chưa được thiết lập. Vui lòng kiểm tra file .env',
       });
     }
 
@@ -104,19 +112,41 @@ exports.uploadAvatar = async (req, res) => {
 
     // Update user avatar
     const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'Không tìm thấy người dùng',
+      });
+    }
+    
     user.avatar = result.secure_url;
     await user.save();
 
+    // Xóa file tạm
+    const fs = require('fs');
+    fs.unlinkSync(req.file.path);
+
     res.status(200).json({
       success: true,
-      message: 'Avatar uploaded successfully',
+      message: 'Avatar đã được tải lên thành công',
       avatar: result.secure_url,
     });
   } catch (error) {
     console.error('Upload avatar error:', error);
+    
+    // Xóa file tạm nếu có lỗi
+    if (req.file && req.file.path) {
+      const fs = require('fs');
+      try {
+        fs.unlinkSync(req.file.path);
+      } catch (unlinkError) {
+        console.error('Error deleting temp file:', unlinkError);
+      }
+    }
+    
     res.status(500).json({
       success: false,
-      message: error.message || 'Server error',
+      message: error.message || 'Lỗi server khi tải lên avatar',
     });
   }
 };

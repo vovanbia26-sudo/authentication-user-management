@@ -6,21 +6,20 @@ const PrivateRoute = ({ children, adminOnly = false }) => {
     const { isAuthenticated, isAdmin, loading } = useAuth();
 
     if (loading) {
-        return ( <
-            div className = "loading-container" >
-            <
-            div className = "spinner" > < /div> <
-            p > Loading... < /p> <
-            /div>
+        return (
+            <div className="loading-container">
+                <div className="spinner"></div>
+                <p>Loading...</p>
+            </div>
         );
     }
 
     if (!isAuthenticated) {
-        return <Navigate to = "/login" / > ;
+        return <Navigate to="/login" />;
     }
 
     if (adminOnly && !isAdmin) {
-        return <Navigate to = "/" / > ;
+        return <Navigate to="/" />;
     }
 
     return children;
