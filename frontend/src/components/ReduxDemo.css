@@ -1,0 +1,165 @@
+.redux-demo {
+    position: fixed;
+    top: 80px;
+    right: 20px;
+    width: 350px;
+    max-height: 80vh;
+    overflow-y: auto;
+    background: white;
+    border: 2px solid #007bff;
+    border-radius: 10px;
+    padding: 15px;
+    box-shadow: 0 4px 20px rgba(0, 123, 255, 0.3);
+    z-index: 1000;
+    font-size: 12px;
+    font-family: 'Courier New', monospace;
+}
+
+.redux-demo h3 {
+    margin: 0 0 15px 0;
+    color: #007bff;
+    text-align: center;
+    font-size: 16px;
+    border-bottom: 2px solid #007bff;
+    padding-bottom: 5px;
+}
+
+.redux-section {
+    margin-bottom: 15px;
+    padding: 10px;
+    background: #f8f9fa;
+    border-radius: 5px;
+    border-left: 3px solid #007bff;
+}
+
+.redux-section h4 {
+    margin: 0 0 8px 0;
+    color: #495057;
+    font-size: 13px;
+    font-weight: bold;
+}
+
+.redux-section p {
+    margin: 5px 0;
+    line-height: 1.4;
+}
+
+/* Status indicators */
+.status.authenticated {
+    color: #28a745;
+    font-weight: bold;
+}
+
+.status.not-authenticated {
+    color: #dc3545;
+    font-weight: bold;
+}
+
+/* Role styling */
+.role.admin {
+    background: #dc3545;
+    color: white;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 10px;
+    font-weight: bold;
+}
+
+.role.moderator {
+    background: #ffc107;
+    color: black;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 10px;
+    font-weight: bold;
+}
+
+.role.user {
+    background: #6c757d;
+    color: white;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 10px;
+    font-weight: bold;
+}
+
+/* Token indicators */
+.token-present {
+    color: #28a745;
+    font-family: monospace;
+    font-size: 10px;
+}
+
+.token-missing {
+    color: #dc3545;
+    font-weight: bold;
+}
+
+/* Loading states */
+.loading-active {
+    color: #ffc107;
+    font-weight: bold;
+}
+
+.loading-inactive {
+    color: #28a745;
+}
+
+.error-message {
+    color: #dc3545;
+    font-weight: bold;
+    background: #f8d7da;
+    padding: 2px 4px;
+    border-radius: 3px;
+}
+
+/* Access indicators */
+.access-granted {
+    color: #28a745;
+    font-weight: bold;
+}
+
+.access-denied {
+    color: #dc3545;
+    font-weight: bold;
+}
+
+/* User info */
+.user-info p {
+    margin: 3px 0;
+}
+
+.tokens p, .states p, .storage p, .route-access p {
+    margin: 3px 0;
+}
+
+/* Scrollbar styling */
+.redux-demo::-webkit-scrollbar {
+    width: 6px;
+}
+
+.redux-demo::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+}
+
+.redux-demo::-webkit-scrollbar-thumb {
+    background: #007bff;
+    border-radius: 3px;
+}
+
+.redux-demo::-webkit-scrollbar-thumb:hover {
+    background: #0056b3;
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+    .redux-demo {
+        position: relative;
+        top: 0;
+        right: 0;
+        width: 100%;
+        max-height: none;
+        margin: 20px 0;
+    }
+}

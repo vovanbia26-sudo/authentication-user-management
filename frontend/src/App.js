@@ -8,6 +8,7 @@ import 'react-toastify/dist/ReactToastify.css';
 
 import Navbar from './components/Navbar';
 import PrivateRoute from './components/PrivateRoute';
+import ReduxDemo from './components/ReduxDemo';
 
 import Home from './pages/Home';
 import Login from './pages/Login';
@@ -26,6 +27,7 @@ function App() {
         <Router>
           <div className="App">
             <Navbar />
+            <ReduxDemo />
             <Routes>
               <Route path="/" element={<Home />} />
               <Route path="/login" element={<Login />} />

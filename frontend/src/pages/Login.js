@@ -1,6 +1,8 @@
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useAppDispatch, useAppSelector } from '../store/hooks';
+import { loginUser, clearError, selectAuth } from '../store/slices/authSlice';
 import { toast } from 'react-toastify';
 import './Auth.css';
 
@@ -9,10 +11,19 @@ const Login = () => {
         email: '',
         password: '',
     });
-    const [loading, setLoading] = useState(false);
-
-    const { login } = useAuth();
+    
+    const dispatch = useAppDispatch();
     const navigate = useNavigate();
+    const location = useLocation();
+    
+    // Redux state
+    const { loading, error, isAuthenticated, user } = useAppSelector(selectAuth);
+    
+    // Context fallback
+    const { login: contextLogin } = useAuth();
+    
+    // Get return URL from location state
+    const from = location.state?.from?.pathname || '/';
 
     const handleChange = (e) => {
         setFormData({
@@ -21,19 +32,52 @@ const Login = () => {
         });
     };
 
+    // Clear error when component mounts
+    useEffect(() => {
+        dispatch(clearError());
+    }, [dispatch]);
+
+    // Redirect if already authenticated
+    useEffect(() => {
+        if (isAuthenticated && user) {
+            toast.success(`Welcome back, ${user.name}!`);
+            navigate(from, { replace: true });
+        }
+    }, [isAuthenticated, user, navigate, from]);
+
+    // Handle Redux login errors
+    useEffect(() => {
+        if (error) {
+            toast.error(error);
+        }
+    }, [error]);
+
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setLoading(true);
-
+        
         try {
-            await login(formData);
-            toast.success('Login successful!');
-            navigate('/profile');
-        } catch (error) {
-            const message = error.response?.data?.message || 'Login failed';
-            toast.error(message);
-        } finally {
-            setLoading(false);
+            // Try Redux login first
+            const result = await dispatch(loginUser(formData)).unwrap();
+            toast.success(`Welcome, ${result.user.name}!`);
+            
+            // Show Redux state info for demo
+            console.log('🎯 Redux Login Success:', {
+                user: result.user,
+                token: result.token ? 'Token saved' : 'No token',
+                isAuthenticated: true
+            });
+            
+            navigate(from, { replace: true });
+        } catch (reduxError) {
+            // Fallback to context login
+            try {
+                await contextLogin(formData);
+                toast.success('Login successful (Context fallback)!');
+                navigate(from, { replace: true });
+            } catch (contextError) {
+                const message = contextError.response?.data?.message || reduxError || 'Login failed';
+                toast.error(message);
+            }
         }
     };
 
@@ -42,6 +86,26 @@ const Login = () => {
             <div className="auth-box">
                 <h2 className="auth-title">Đăng nhập</h2>
                 <p className="auth-subtitle">Chào mừng trở lại! Vui lòng đăng nhập vào tài khoản của bạn.</p>
+                
+                {/* Redux State Demo */}
+                {process.env.NODE_ENV === 'development' && (
+                    <div style={{ 
+                        background: '#f0f8ff', 
+                        padding: '10px', 
+                        borderRadius: '5px', 
+                        marginBottom: '15px',
+                        fontSize: '12px',
+                        border: '1px solid #007bff'
+                    }}>
+                        <strong>🔧 Redux State Demo:</strong><br/>
+                        <span style={{ color: isAuthenticated ? 'green' : 'red' }}>
+                            Auth: {isAuthenticated ? '✅ Logged In' : '❌ Not Logged In'}
+                        </span><br/>
+                        {user && <span style={{ color: 'blue' }}>User: {user.name} ({user.role})</span>}<br/>
+                        {loading && <span style={{ color: 'orange' }}>Loading: ⏳ Processing...</span>}<br/>
+                        {error && <span style={{ color: 'red' }}>Error: {error}</span>}
+                    </div>
+                )}
 
                 <form onSubmit={handleSubmit} className="auth-form">
                     <div className="form-group">
