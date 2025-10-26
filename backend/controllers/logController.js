@@ -113,7 +113,10 @@ exports.getActivityStats = async (req, res) => {
     const topIPs = await ActivityLog.aggregate([
       {
         $match: {
-          timestamp: { $gte: new Date(Date.now() - timeWindow * 60 * 60 * 1000) }
+          $or: [
+            { timestamp: { $gte: new Date(Date.now() - timeWindow * 60 * 60 * 1000) } },
+            { createdAt: { $gte: new Date(Date.now() - timeWindow * 60 * 60 * 1000) } }
+          ]
         }
       },
       {
@@ -132,14 +135,21 @@ exports.getActivityStats = async (req, res) => {
       {
         $match: {
           action: 'failed_login',
-          timestamp: { $gte: new Date(Date.now() - timeWindow * 60 * 60 * 1000) }
+          $or: [
+            { timestamp: { $gte: new Date(Date.now() - timeWindow * 60 * 60 * 1000) } },
+            { createdAt: { $gte: new Date(Date.now() - timeWindow * 60 * 60 * 1000) } }
+          ]
         }
       },
       {
         $group: {
           _id: '$ipAddress',
           count: { $sum: 1 },
-          lastAttempt: { $max: '$timestamp' }
+          lastAttempt: { 
+            $max: {
+              $ifNull: ['$timestamp', '$createdAt']
+            }
+          }
         }
       },
       { $sort: { count: -1 } },
@@ -178,7 +188,10 @@ exports.getSecurityAlerts = async (req, res) => {
     const suspiciousIPs = await ActivityLog.aggregate([
       {
         $match: {
-          timestamp: { $gte: since },
+          $or: [
+            { timestamp: { $gte: since } },
+            { createdAt: { $gte: since } }
+          ],
           success: false
         }
       },
@@ -187,7 +200,11 @@ exports.getSecurityAlerts = async (req, res) => {
           _id: '$ipAddress',
           failedAttempts: { $sum: 1 },
           actions: { $addToSet: '$action' },
-          lastAttempt: { $max: '$timestamp' }
+          lastAttempt: { 
+            $max: {
+              $ifNull: ['$timestamp', '$createdAt']
+            }
+          }
         }
       },
       {
@@ -201,7 +218,10 @@ exports.getSecurityAlerts = async (req, res) => {
       {
         $match: {
           action: 'failed_login',
-          timestamp: { $gte: since }
+          $or: [
+            { timestamp: { $gte: since } },
+            { createdAt: { $gte: since } }
+          ]
         }
       },
       {
@@ -209,7 +229,11 @@ exports.getSecurityAlerts = async (req, res) => {
           _id: '$metadata.email',
           failedAttempts: { $sum: 1 },
           ips: { $addToSet: '$ipAddress' },
-          lastAttempt: { $max: '$timestamp' }
+          lastAttempt: { 
+            $max: {
+              $ifNull: ['$timestamp', '$createdAt']
+            }
+          }
         }
       },
       {
@@ -220,13 +244,19 @@ exports.getSecurityAlerts = async (req, res) => {
 
     // Rate limit violations
     const rateLimitViolations = await ActivityLog.countDocuments({
-      timestamp: { $gte: since },
+      $or: [
+        { timestamp: { $gte: since } },
+        { createdAt: { $gte: since } }
+      ],
       'metadata.rateLimitHit': true
     });
 
     // Brute force attempts
     const bruteForceAttempts = await ActivityLog.countDocuments({
-      timestamp: { $gte: since },
+      $or: [
+        { timestamp: { $gte: since } },
+        { createdAt: { $gte: since } }
+      ],
       'metadata.bruteForceBlocked': true
     });
 
