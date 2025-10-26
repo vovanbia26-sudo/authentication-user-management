@@ -243,12 +243,41 @@ exports.forgotPassword = async (req, res) => {
   try {
     const { email } = req.body;
 
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please provide an email',
+      });
+    }
+
+    // Validate email format
+    const emailRegex = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please provide a valid email address',
+      });
+    }
+
     const user = await User.findOne({ email });
 
     if (!user) {
-      return res.status(404).json({
+      // Don't reveal if user exists or not for security
+      return res.status(200).json({
+        success: true,
+        message: 'If an account with that email exists, a reset link has been sent',
+      });
+    }
+
+    // Check if user recently requested reset (rate limiting)
+    const now = new Date();
+    const lastResetRequest = user.resetPasswordExpire;
+    
+    if (lastResetRequest && now < lastResetRequest) {
+      const timeLeft = Math.ceil((lastResetRequest - now) / (1000 * 60)); // minutes
+      return res.status(429).json({
         success: false,
-        message: 'No user found with that email',
+        message: `Please wait ${timeLeft} minutes before requesting another reset`,
       });
     }
 
@@ -264,15 +293,74 @@ exports.forgotPassword = async (req, res) => {
     // Create reset url
     const resetUrl = `${process.env.CLIENT_URL}/reset-password/${resetToken}`;
 
-    const message = `You are receiving this email because you (or someone else) has requested to reset your password. Please click on the following link to reset your password:\n\n${resetUrl}\n\nIf you did not request this, please ignore this email.`;
+    const message = `Password Reset Request
+
+Hello ${user.name},
+
+You are receiving this email because you (or someone else) has requested to reset your password for your account.
+
+Please click on the following link to reset your password:
+${resetUrl}
+
+If you did not request this password reset, please ignore this email and your password will remain unchanged.
+
+This link will expire in 10 minutes for security reasons.
+
+Best regards,
+Authentication App Team`;
 
     const html = `
-      <h1>Password Reset Request</h1>
-      <p>You are receiving this email because you (or someone else) has requested to reset your password.</p>
-      <p>Please click on the following link to reset your password:</p>
-      <a href="${resetUrl}" target="_blank">Reset Password</a>
-      <p>If you did not request this, please ignore this email.</p>
-      <p>This link will expire in 10 minutes.</p>
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Password Reset Request</title>
+        <style>
+          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; }
+          .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+          .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
+          .button { display: inline-block; background: #667eea; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; margin: 20px 0; font-weight: bold; }
+          .button:hover { background: #5a67d8; }
+          .footer { text-align: center; margin-top: 20px; font-size: 12px; color: #666; }
+          .warning { background: #fff3cd; border: 1px solid #ffeaa7; padding: 15px; border-radius: 5px; margin: 20px 0; }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <h1>🔐 Password Reset Request</h1>
+        </div>
+        <div class="content">
+          <p>Hello <strong>${user.name}</strong>,</p>
+          
+          <p>You are receiving this email because you (or someone else) has requested to reset your password for your account.</p>
+          
+          <p>Please click on the button below to reset your password:</p>
+          
+          <div style="text-align: center;">
+            <a href="${resetUrl}" class="button" target="_blank">Reset My Password</a>
+          </div>
+          
+          <p>Or copy and paste this link into your browser:</p>
+          <p style="word-break: break-all; background: #f0f0f0; padding: 10px; border-radius: 5px;">${resetUrl}</p>
+          
+          <div class="warning">
+            <p><strong>⚠️ Security Notice:</strong></p>
+            <ul>
+              <li>This link will expire in <strong>10 minutes</strong></li>
+              <li>If you did not request this, please ignore this email</li>
+              <li>Your password will remain unchanged if you don't click the link</li>
+            </ul>
+          </div>
+          
+          <p>Best regards,<br>
+          <strong>Authentication App Team</strong></p>
+        </div>
+        <div class="footer">
+          <p>This is an automated email. Please do not reply to this message.</p>
+        </div>
+      </body>
+      </html>
     `;
 
     try {
