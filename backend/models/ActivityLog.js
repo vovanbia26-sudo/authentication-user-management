@@ -5,7 +5,7 @@ const activityLogSchema = new mongoose.Schema(
     user: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
-      required: true,
+      required: false, // Allow null for failed logins
     },
     action: {
       type: String,
@@ -66,11 +66,15 @@ activityLogSchema.index({ timestamp: -1 });
 // Static method to log activity
 activityLogSchema.statics.logActivity = async function(data) {
   try {
+    console.log('📝 Attempting to log activity:', data.action, data.user ? `by user ${data.user}` : 'anonymous');
     const log = new this(data);
-    await log.save();
-    console.log(`Activity logged: ${data.action} by user ${data.user}`);
+    const savedLog = await log.save();
+    console.log(`✅ Activity logged successfully: ${data.action} (ID: ${savedLog._id})`);
+    return savedLog;
   } catch (error) {
-    console.error('Error logging activity:', error);
+    console.error('❌ Error logging activity:', error);
+    console.error('Data that failed:', data);
+    throw error;
   }
 };
 

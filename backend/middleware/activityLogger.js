@@ -22,6 +22,7 @@ const logActivity = (action, description) => {
               url: req.originalUrl,
               statusCode: res.statusCode,
               responseTime: Date.now() - req.startTime,
+              requestBody: req.body ? { email: req.body.email } : null, // Log email for failed logins
             }
           };
 
@@ -106,12 +107,15 @@ const logFailedLogin = async (email, req, reason = 'Invalid credentials') => {
         email: email,
         method: req.method,
         url: req.originalUrl,
+        timestamp: new Date().toISOString(),
       }
     };
 
+    console.log('🚨 Logging failed login:', logData); // Debug log
     await ActivityLog.logActivity(logData);
+    console.log('✅ Failed login logged successfully'); // Debug log
   } catch (error) {
-    console.error('Failed login logging error:', error);
+    console.error('❌ Failed login logging error:', error);
   }
 };
 
