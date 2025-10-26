@@ -3,14 +3,14 @@ import { toast } from 'react-toastify';
 import { useAuth } from '../context/AuthContext';
 import userService from '../services/userService';
 import Loading from '../components/Loading';
+import AvatarUpload from '../components/AvatarUpload';
 import './Profile.css';
 
 const Profile = () => {
     const { user, updateUser } = useAuth();
     const [isEditing, setIsEditing] = useState(false);
     const [loading, setLoading] = useState(false);
-    const [avatarFile, setAvatarFile] = useState(null);
-    const [avatarPreview, setAvatarPreview] = useState(null);
+    const [showAvatarUpload, setShowAvatarUpload] = useState(false);
 
     const [formData, setFormData] = useState({
         name: '',
@@ -37,47 +37,6 @@ const Profile = () => {
         });
     };
 
-    const handleAvatarChange = (e) => {
-        const file = e.target.files[0];
-        if (file) {
-            setAvatarFile(file);
-            setAvatarPreview(URL.createObjectURL(file));
-        }
-    };
-
-    const handleAvatarUpload = async () => {
-        if (!avatarFile) {
-            toast.error('Vui lòng chọn một hình ảnh');
-            return;
-        }
-        
-        // Kiểm tra kích thước file (5MB)
-        if (avatarFile.size > 5 * 1024 * 1024) {
-            toast.error('Kích thước file quá lớn. Vui lòng chọn file nhỏ hơn 5MB');
-            return;
-        }
-        
-        // Kiểm tra loại file
-        if (!avatarFile.type.startsWith('image/')) {
-            toast.error('Vui lòng chọn file hình ảnh hợp lệ');
-            return;
-        }
-        
-        setLoading(true);
-        try {
-            const response = await userService.uploadAvatar(avatarFile);
-            updateUser({ ...user, avatar: response.avatar });
-            toast.success('Avatar đã được cập nhật thành công!');
-            setAvatarFile(null);
-            setAvatarPreview(null);
-        } catch (error) {
-            console.error('Upload error:', error);
-            const message = error.response?.data?.message || 'Không thể tải lên avatar. Vui lòng kiểm tra cấu hình Cloudinary';
-            toast.error(message);
-        } finally {
-            setLoading(false);
-        }
-    };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -132,28 +91,29 @@ const Profile = () => {
                 </div>
                 <div className="profile-avatar-section">
                     <img
-                        src={avatarPreview || user.avatar}
+                        src={user.avatar}
                         alt={user.name}
                         className="profile-avatar"
                     />
-                    <div className="avatar-upload">
-                        <input
-                            type="file"
-                            id="avatar"
-                            accept="image/*"
-                            onChange={handleAvatarChange}
-                            style={{ display: 'none' }}
-                        />
-                        <label htmlFor="avatar" className="avatar-label">
-                            Chọn hình ảnh
-                        </label>
-                        {avatarFile && (
-                            <button onClick={handleAvatarUpload} className="upload-button" disabled={loading}>
-                                {loading ? 'Đang tải lên...' : 'Tải lên'}
-                            </button>
-                        )}
-                    </div>
+                    <button 
+                        onClick={() => setShowAvatarUpload(!showAvatarUpload)} 
+                        className="avatar-toggle-button"
+                    >
+                        {showAvatarUpload ? 'Ẩn Upload Avatar' : '📸 Đổi Avatar'}
+                    </button>
                 </div>
+
+                {showAvatarUpload && (
+                    <div className="avatar-upload-section">
+                        <AvatarUpload 
+                            currentAvatar={user.avatar}
+                            onAvatarUpdate={(newAvatar) => {
+                                updateUser({ ...user, avatar: newAvatar });
+                                setShowAvatarUpload(false);
+                            }}
+                        />
+                    </div>
+                )}
                 {isEditing ? (
                     <form onSubmit={handleSubmit} className="profile-form">
                         <div className="form-group">
