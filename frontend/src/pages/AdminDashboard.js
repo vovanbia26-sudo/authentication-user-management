@@ -2,12 +2,17 @@ import React, { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
 import userService from '../services/userService';
 import Loading from '../components/Loading';
+import { useAuth } from '../context/AuthContext';
 import './AdminDashboard.css';
 
 const AdminDashboard = () => {
+    const { user, isAdmin, isModerator } = useAuth();
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [deletingId, setDeletingId] = useState(null);
+    const [stats, setStats] = useState(null);
+    const [selectedRole, setSelectedRole] = useState('all');
+    const [searchTerm, setSearchTerm] = useState('');
 
     useEffect(() => {
         fetchUsers();
@@ -44,9 +49,17 @@ const AdminDashboard = () => {
     };
 
     const handleToggleRole = async (userId, currentRole) => {
-        const newRole = currentRole === 'admin' ? 'user' : 'admin';
+        // Only admin can change roles
+        if (!isAdmin) {
+            toast.error('Only administrators can change user roles');
+            return;
+        }
 
-        if (!window.confirm(`Change role to ${newRole}?`)) {
+        const roleOptions = ['user', 'moderator', 'admin'];
+        const currentIndex = roleOptions.indexOf(currentRole);
+        const newRole = roleOptions[(currentIndex + 1) % roleOptions.length];
+
+        if (!window.confirm(`Change role from ${currentRole} to ${newRole}?`)) {
             return;
         }
 

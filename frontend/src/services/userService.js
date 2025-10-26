@@ -60,6 +60,23 @@ const userService = {
         const response = await api.put(`/users/${id}/role`, { role });
         return response.data;
     },
+
+    // Advanced RBAC APIs
+    getAllUsersForManagement: async(params = {}) => {
+        const queryString = new URLSearchParams(params).toString();
+        const response = await api.get(`/users/manage/all?${queryString}`);
+        return response.data;
+    },
+
+    getUserStats: async() => {
+        const response = await api.get('/users/manage/stats');
+        return response.data;
+    },
+
+    updateUserRoleAdvanced: async(id, role) => {
+        const response = await api.put(`/users/manage/${id}/role`, { role });
+        return response.data;
+    },
 };
 
 export default userService;

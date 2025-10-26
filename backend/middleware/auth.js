@@ -57,3 +57,38 @@ exports.authorize = (...roles) => {
   };
 };
 
+// Check specific role (more flexible than authorize)
+exports.checkRole = (role) => {
+  return (req, res, next) => {
+    if (req.user.role !== role) {
+      return res.status(403).json({
+        success: false,
+        message: `Access denied. Required role: ${role}`,
+      });
+    }
+    next();
+  };
+};
+
+// Check if user has minimum role level
+exports.checkMinRole = (minRole) => {
+  const roleHierarchy = {
+    'user': 1,
+    'moderator': 2,
+    'admin': 3
+  };
+
+  return (req, res, next) => {
+    const userRoleLevel = roleHierarchy[req.user.role] || 0;
+    const minRoleLevel = roleHierarchy[minRole] || 0;
+
+    if (userRoleLevel < minRoleLevel) {
+      return res.status(403).json({
+        success: false,
+        message: `Access denied. Minimum required role: ${minRole}`,
+      });
+    }
+    next();
+  };
+};
+

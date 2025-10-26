@@ -9,8 +9,11 @@ const {
   getUserById,
   deleteUser,
   updateUserRole,
+  getAllUsersForManagement,
+  updateUserRoleAdvanced,
+  getUserStats,
 } = require('../controllers/userController');
-const { protect, authorize } = require('../middleware/auth');
+const { protect, authorize, checkRole, checkMinRole } = require('../middleware/auth');
 
 // Multer configuration for file upload
 const upload = multer({
@@ -32,11 +35,16 @@ router.get('/profile', protect, getProfile);
 router.put('/profile', protect, updateProfile);
 router.post('/upload-avatar', protect, upload.single('avatar'), uploadAvatar);
 
-// Admin routes
+// Admin routes (existing)
 router.get('/', protect, authorize('admin'), getAllUsers);
 router.get('/:id', protect, authorize('admin'), getUserById);
 router.delete('/:id', protect, deleteUser); // Admin or own account
 router.put('/:id/role', protect, authorize('admin'), updateUserRole);
+
+// Advanced RBAC routes
+router.get('/manage/all', protect, checkMinRole('moderator'), getAllUsersForManagement);
+router.get('/manage/stats', protect, checkMinRole('moderator'), getUserStats);
+router.put('/manage/:id/role', protect, checkRole('admin'), updateUserRoleAdvanced);
 
 module.exports = router;
 

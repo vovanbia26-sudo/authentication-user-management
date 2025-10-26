@@ -5,7 +5,7 @@ import { toast } from 'react-toastify';
 import './Navbar.css';
 
 const Navbar = () => {
-    const { user, logout, isAuthenticated, isAdmin } = useAuth();
+    const { user, logout, isAuthenticated, isAdmin, isModerator, isAdminOrModerator } = useAuth();
     const navigate = useNavigate();
 
     const handleLogout = async () => {
@@ -33,16 +33,18 @@ const Navbar = () => {
                                     Hồ sơ
                                 </Link>
                             </li>
-                            {isAdmin && (
+                            {isAdminOrModerator && (
                                 <li>
                                     <Link to="/admin" className="navbar-link">
-                                        Bảng điều khiển Admin
+                                        {isAdmin ? 'Bảng điều khiển Admin' : 'Bảng điều khiển Moderator'}
                                     </Link>
                                 </li>
                             )}
                             <li>
                                 <span className="navbar-user">
-                                    Xin chào, {user?.name} {isAdmin && '(Admin)'}
+                                    Xin chào, {user?.name} 
+                                    {isAdmin && ' (Admin)'}
+                                    {isModerator && ' (Moderator)'}
                                 </span>
                             </li>
                             <li>

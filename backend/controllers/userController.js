@@ -284,3 +284,145 @@ exports.updateUserRole = async (req, res) => {
   }
 };
 
+// @desc    Get all users (Admin & Moderator only)
+// @route   GET /api/users/manage
+// @access  Private (Admin/Moderator)
+exports.getAllUsersForManagement = async (req, res) => {
+  try {
+    const { page = 1, limit = 10, role, search } = req.query;
+    
+    // Build query
+    let query = {};
+    
+    if (role && role !== 'all') {
+      query.role = role;
+    }
+    
+    if (search) {
+      query.$or = [
+        { name: { $regex: search, $options: 'i' } },
+        { email: { $regex: search, $options: 'i' } }
+      ];
+    }
+
+    const users = await User.find(query)
+      .select('-password')
+      .sort({ createdAt: -1 })
+      .limit(limit * 1)
+      .skip((page - 1) * limit);
+
+    const total = await User.countDocuments(query);
+
+    res.status(200).json({
+      success: true,
+      users,
+      pagination: {
+        page: parseInt(page),
+        limit: parseInt(limit),
+        total,
+        pages: Math.ceil(total / limit)
+      }
+    });
+  } catch (error) {
+    console.error('Get all users error:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Server error',
+    });
+  }
+};
+
+// @desc    Update user role (Admin only)
+// @route   PUT /api/users/:id/role
+// @access  Private (Admin only)
+exports.updateUserRoleAdvanced = async (req, res) => {
+  try {
+    const { role } = req.body;
+    const userId = req.params.id;
+
+    // Validate role
+    if (!['user', 'moderator', 'admin'].includes(role)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid role. Must be user, moderator, or admin',
+      });
+    }
+
+    // Prevent admin from changing their own role
+    if (userId === req.user.id.toString()) {
+      return res.status(400).json({
+        success: false,
+        message: 'Cannot change your own role',
+      });
+    }
+
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found',
+      });
+    }
+
+    user.role = role;
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      message: `User role updated to ${role}`,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        avatar: user.avatar,
+      },
+    });
+  } catch (error) {
+    console.error('Update user role error:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Server error',
+    });
+  }
+};
+
+// @desc    Get user statistics (Admin & Moderator)
+// @route   GET /api/users/stats
+// @access  Private (Admin/Moderator)
+exports.getUserStats = async (req, res) => {
+  try {
+    const totalUsers = await User.countDocuments();
+    const adminCount = await User.countDocuments({ role: 'admin' });
+    const moderatorCount = await User.countDocuments({ role: 'moderator' });
+    const userCount = await User.countDocuments({ role: 'user' });
+
+    // Recent users (last 30 days)
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    const recentUsers = await User.countDocuments({ 
+      createdAt: { $gte: thirtyDaysAgo } 
+    });
+
+    res.status(200).json({
+      success: true,
+      stats: {
+        total: totalUsers,
+        roles: {
+          admin: adminCount,
+          moderator: moderatorCount,
+          user: userCount
+        },
+        recentUsers
+      }
+    });
+  } catch (error) {
+    console.error('Get user stats error:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Server error',
+    });
+  }
+};
+
