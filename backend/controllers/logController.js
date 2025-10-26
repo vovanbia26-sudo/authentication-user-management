@@ -274,9 +274,9 @@ exports.cleanupLogs = async (req, res) => {
 };
 
 module.exports = {
-  getAllLogs,
-  getUserLogs,
-  getActivityStats,
-  getSecurityAlerts,
-  cleanupLogs,
+  getAllLogs: exports.getAllLogs,
+  getUserLogs: exports.getUserLogs,
+  getActivityStats: exports.getActivityStats,
+  getSecurityAlerts: exports.getSecurityAlerts,
+  cleanupLogs: exports.cleanupLogs,
 };
