@@ -103,7 +103,10 @@ exports.getActivityStats = async (req, res) => {
     // Get additional stats
     const totalLogs = await ActivityLog.countDocuments();
     const recentLogs = await ActivityLog.countDocuments({
-      timestamp: { $gte: new Date(Date.now() - timeWindow * 60 * 60 * 1000) }
+      $or: [
+        { timestamp: { $gte: new Date(Date.now() - timeWindow * 60 * 60 * 1000) } },
+        { createdAt: { $gte: new Date(Date.now() - timeWindow * 60 * 60 * 1000) } }
+      ]
     });
 
     // Get top IPs with most activity

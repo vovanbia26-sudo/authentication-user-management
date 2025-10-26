@@ -92,7 +92,10 @@ activityLogSchema.statics.getFailedLoginAttempts = async function(ipAddress, tim
   return this.countDocuments({
     action: 'failed_login',
     ipAddress: ipAddress,
-    timestamp: { $gte: since }
+    $or: [
+      { timestamp: { $gte: since } },
+      { createdAt: { $gte: since } }
+    ]
   });
 };
 
@@ -100,8 +103,31 @@ activityLogSchema.statics.getFailedLoginAttempts = async function(ipAddress, tim
 activityLogSchema.statics.getActivityStats = async function(timeWindow = 24) {
   const since = new Date(Date.now() - timeWindow * 60 * 60 * 1000); // hours ago
   
+  console.log('🔍 Getting activity stats since:', since);
+  console.log('🔍 Current time:', new Date());
+  
+  // First check if we have any logs at all
+  const totalCount = await this.countDocuments();
+  console.log('📊 Total logs in database:', totalCount);
+  
+  // Check logs in time window using both timestamp and createdAt
+  const recentCount = await this.countDocuments({
+    $or: [
+      { timestamp: { $gte: since } },
+      { createdAt: { $gte: since } }
+    ]
+  });
+  console.log('📊 Recent logs in time window:', recentCount);
+  
   const stats = await this.aggregate([
-    { $match: { timestamp: { $gte: since } } },
+    { 
+      $match: { 
+        $or: [
+          { timestamp: { $gte: since } },
+          { createdAt: { $gte: since } }
+        ]
+      } 
+    },
     {
       $group: {
         _id: '$action',
@@ -117,6 +143,7 @@ activityLogSchema.statics.getActivityStats = async function(timeWindow = 24) {
     { $sort: { count: -1 } }
   ]);
 
+  console.log('📊 Aggregated stats:', stats);
   return stats;
 };
 
