@@ -1,7 +1,9 @@
 const User = require('../models/User');
 const RefreshToken = require('../models/RefreshToken');
+const ActivityLog = require('../models/ActivityLog');
 const crypto = require('crypto');
 const sendEmail = require('../utils/sendEmail');
+const { logFailedLogin, logActivityManual } = require('../middleware/activityLogger');
 
 // @desc    Register user
 // @route   POST /api/auth/signup
@@ -71,6 +73,8 @@ exports.login = async (req, res) => {
     const user = await User.findOne({ email }).select('+password');
 
     if (!user) {
+      // Log failed login attempt
+      await logFailedLogin(email, req, 'User not found');
       return res.status(401).json({
         success: false,
         message: 'Invalid credentials',
@@ -81,6 +85,8 @@ exports.login = async (req, res) => {
     const isMatch = await user.comparePassword(password);
 
     if (!isMatch) {
+      // Log failed login attempt
+      await logFailedLogin(email, req, 'Invalid password');
       return res.status(401).json({
         success: false,
         message: 'Invalid credentials',

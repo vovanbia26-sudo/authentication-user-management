@@ -3,6 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const connectDatabase = require('./config/database');
 const errorHandler = require('./middleware/errorHandler');
+const { generalLimiter } = require('./middleware/rateLimiter');
 
 // Initialize app
 const app = express();
@@ -15,12 +16,20 @@ app.use(cors({
   origin: process.env.CLIENT_URL || 'http://localhost:3000',
   credentials: true,
 }));
+
+// Trust proxy for accurate IP addresses
+app.set('trust proxy', 1);
+
+// General rate limiting
+app.use(generalLimiter);
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Routes
 app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/users', require('./routes/userRoutes'));
+app.use('/api/logs', require('./routes/logRoutes'));
 
 // Health check route
 app.get('/api/health', (req, res) => {

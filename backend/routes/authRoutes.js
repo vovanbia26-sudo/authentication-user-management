@@ -9,23 +9,32 @@ const {
   resetPassword,
 } = require('../controllers/authController');
 const { protect } = require('../middleware/auth');
+const {
+  authLimiter,
+  loginLimiter,
+  passwordResetLimiter,
+  createBruteForceProtection,
+} = require('../middleware/rateLimiter');
+const {
+  logSignup,
+  logLogin,
+  logLogout,
+  logForgotPassword,
+  logResetPassword,
+  logTokenRefresh,
+} = require('../middleware/activityLogger');
 
-// Public routes
-router.post('/signup', signup);
-router.post('/login', login);
-router.post('/refresh', refreshToken);
-router.post('/forgot-password', forgotPassword);
+// Public routes with rate limiting and logging
+router.post('/signup', authLimiter, logSignup, signup);
+router.post('/login', loginLimiter, createBruteForceProtection(), logLogin, login);
+router.post('/refresh', authLimiter, logTokenRefresh, refreshToken);
+router.post('/forgot-password', passwordResetLimiter, logForgotPassword, forgotPassword);
 
-// Debug middleware for reset-password
-router.put('/reset-password/:resetToken', (req, res, next) => {
-  console.log('🔥 Reset Password Route Hit!');
-  console.log('Token from URL:', req.params.resetToken);
-  console.log('Request body:', req.body);
-  next();
-}, resetPassword);
+// Reset password with logging
+router.put('/reset-password/:resetToken', authLimiter, logResetPassword, resetPassword);
 
 // Protected routes
-router.post('/logout', protect, logout);
+router.post('/logout', protect, logLogout, logout);
 
 // Test route để lấy resetToken (chỉ dùng cho development)
 router.get('/test-reset-token/:email', async (req, res) => {
